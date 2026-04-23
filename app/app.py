@@ -117,7 +117,7 @@ def create_search_engine(file_data: bytes, file_type: str = None) -> tuple[Vecto
     # Add OpenAI's embedding model as the encoder. The most standard one to
     # use is text-embedding-ada-002.
     ##########################################################################
-    encoder = ...
+    encoder = OpenAIEmbeddings(model="text-embedding-3-small-001")
     ##########################################################################
 
     # Initialize Chromadb client and settings, reset to ensure we get a clean
@@ -140,7 +140,12 @@ def create_search_engine(file_data: bytes, file_type: str = None) -> tuple[Vecto
     # Now we have defined our encoder model and initialized our search engine
     # client, please create the search engine from documents
     ##########################################################################
-    search_engine = Chroma.from_documents(...)
+    search_engine = Chroma.from_documents(
+        client=client,
+        documents=docs,
+        embedding=encoder,
+        client_settings=client_settings
+        )
     ##########################################################################
 
     return search_engine, docs
