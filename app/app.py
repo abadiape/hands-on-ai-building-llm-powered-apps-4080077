@@ -1,11 +1,13 @@
-from typing import List, Dict, Any
+from typing import Dict
 
+from portkey_ai import createHeaders
 from dotenv import load_dotenv
-from langchain.callbacks.base import BaseCallbackHandler
+from langchain_core.callbacks import BaseCallbackHandler
 from langchain_openai import ChatOpenAI
 from langchain_core.messages.utils import convert_to_messages
 
 import streamlit as st
+import os
 
 
 # Load environment variables
@@ -42,13 +44,24 @@ class StreamlitCallbackHandler(BaseCallbackHandler):
 
 def main():
     st.title("📚 PDF Q&A Assistant")
+
     ##########################################################################
     # Exercise 1a:
     # First, we need to choose an LLM from OpenAI's list of models. Remember
     # to set streaming=True for streaming tokens
     ##########################################################################
     chain = ChatOpenAI(
-        ...
+        api_key=os.environ["OPENAI_API_KEY"],
+        base_url=os.environ["OPENAI_BASE_URL"],
+        default_headers=createHeaders(
+            api_key=os.environ["PORTKEY_API_KEY"],
+            provider="openai"
+        ),
+        model="@azure-openai/gpt-4o-mini",
+        streaming=True,
+        temperature=0.7,
+        max_tokens=2048,
+        callbacks=[StreamlitCallbackHandler(st.empty())]
     )
     ##########################################################################
     # Store the chain in session state
@@ -69,7 +82,10 @@ def main():
         ##########################################################################
         # Add user message to chat history
         st.session_state.messages.append(
-            ...
+            {
+                "role": "user",
+                "content": prompt
+            }
         )
         ##########################################################################
 
@@ -88,17 +104,20 @@ def main():
                     # After invoking, please remember adding the # response to chat history.
                     ##########################################################################
                     chat_history = convert_to_messages(
-                        ...
+                        st.session_state.messages
                     )
 
-                    response = ...
+                    response = st.session_state.chain.invoke(chat_history)
                     answer = response.content
 
                     st.markdown(answer)
 
                     # Add assistant response to chat history
                     st.session_state.messages.append(
-                        ...
+                        {
+                            "role": "assistant",
+                            "content": answer
+                        }
                     )
                     ##########################################################################
 
