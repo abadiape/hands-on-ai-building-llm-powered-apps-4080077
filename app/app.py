@@ -66,8 +66,8 @@ def process_file(file_data: bytes, file_type: str = None) -> List[Document]:
         # the file is 'tempfile.name'. Please use one of the PDF loaders in
         # Langchain to load the file.
         ######################################################################
-        loader = PDFPlumberLoader(...)
-        documents = ...
+        loader = PDFPlumberLoader(tmp_file_path)
+        documents = loader.load()
         ######################################################################
     finally:
         # Clean up the temporary file
@@ -87,8 +87,13 @@ def process_file(file_data: bytes, file_type: str = None) -> List[Document]:
     # a list of helpful text splitters. Please use one of the splitters
     # to chunk the file.
     ######################################################################
-    text_splitter = ...
-    docs = text_splitter.split_documents(...)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,
+        separators=["\n\n", "\n", " ", ""]
+    )
+    docs = text_splitter.split_documents(documents)
     ######################################################################
     for i, doc in enumerate(docs):
         doc.metadata["source"] = f"source_{i}"
@@ -133,13 +138,14 @@ def main():
                     try:
                         # Process the PDF
                         docs = process_file(
-                            ...
+                            uploaded_file.getvalue(),
+                            uploaded_file.type,
                         )
                         st.write(f"✅ Extracted {len(docs)} text chunks")
 
                         # Store in session state
-                        st.session_state.docs = ...
-                        st.session_state.processed_file = ...
+                        st.session_state.docs = docs
+                        st.session_state.processed_file = uploaded_file.name
         ######################################################################
 
                         status.update(
